@@ -164,7 +164,7 @@ def cleanup(downloaded_installer: str):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Update Burp Suite Community Edition')
     parser.add_argument('-v', '--version', help='Update to version')
-    parser.add_argument('-p', '--platform', help='Update for platform [Default Linux]', default='Linux', choices=['Linux', 'LinuxArm64', 'Jar', 'MacOsArm64', 'MaxOsx', 'WindowsX64'])
+    parser.add_argument('-p', '--platform', help='Update for platform [Default Linux]', default='Linux', choices=['Linux', 'LinuxArm64', 'Jar', 'MacOsArm64', 'MaxOsx'])
     parser.add_argument('--download-only', help='Download installer only', action='store_true')
     parser.add_argument('--install-only', help='Install from already downloaded installer only', action='store_true')
     parser.add_argument('--file', help='Path to downloaded installer')
