@@ -27,4 +27,10 @@ options:
   -c, --current         Get current version status
 ```
 
+- Installation:
+  ```
+  git clone https://github.com/The-Debarghya/burp-updater
+  pip3 install -r requirements.txt
+  ```
+
 - Currently supports ONLY `Community Edition` of Burp in Linux and Mac only.

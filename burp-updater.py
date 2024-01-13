@@ -229,7 +229,9 @@ if __name__ == '__main__':
         print(f'Installer downloaded to {os.getcwd() + "/" + downloaded_archive}')
         uninstall_old_version()
         install_from_installer(downloaded_archive)
-        subprocess.run(['bash', '-c', 'sudo -k'], shell=True, capture_output=True, check=True)
+        proc = subprocess.run(['bash', '-c', 'sudo -k'], shell=True, capture_output=True, check=True)
+        if proc.returncode != 0:
+            raise Exception("Error while dropping sudo privileges")
         print("Cleaning up...")
         cleanup(downloaded_archive)
     except Exception as e:
