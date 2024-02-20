@@ -4,6 +4,7 @@ import argparse
 import hashlib
 import requests
 import subprocess
+import traceback
 
 from rich.console import Console
 from rich.progress import Progress
@@ -215,7 +216,7 @@ if __name__ == '__main__':
     if args.uninstall_only:
         try:
             uninstall_old_version()
-            process = subprocess.run(['bash', '-c', 'sudo -k'], shell=True, capture_output=True, check=True)
+            process = subprocess.run(['bash', '-c', 'sudo -k'], check=True)
             if process.returncode != 0:
                 raise Exception()
         except:
@@ -229,12 +230,13 @@ if __name__ == '__main__':
         print(f'Installer downloaded to {os.getcwd() + "/" + downloaded_archive}')
         uninstall_old_version()
         install_from_installer(downloaded_archive)
-        proc = subprocess.run(['bash', '-c', 'sudo -k'], shell=True, capture_output=True, check=True)
+        proc = subprocess.run(['bash', '-c', 'sudo -k'], check=True)
         if proc.returncode != 0:
             raise Exception("Error while dropping sudo privileges")
         print("Cleaning up...")
         cleanup(downloaded_archive)
     except Exception as e:
-        print(f'Error: {e.__str__()}')
+        #print(f'Error: {e.__str__()}')
+        traceback.print_exc()
         exit(1)
     
