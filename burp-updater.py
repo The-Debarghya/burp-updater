@@ -82,7 +82,7 @@ def check_for_updates(current_version: str) -> tuple:
             for result in results:
                 if (
                     result["productType"] != "pro"
-                    or result["productType"] != "enterprise"
+                    and result["productType"] != "enterprise"
                 ) and result["releaseChannels"][0] == "Stable":
                     comp = compare_versions(current_version, result["version"])
                     if comp == -1:
@@ -126,14 +126,14 @@ def download_new_installer(version: str, platform: str) -> str:
         status.update()
         time.sleep(0.1)
         status.stop()
-
+    response_headers = requests.head(DOWNLOAD_URL + f"&version={version}&type={platform}").headers
+    file_size = int(response_headers.get("Content-Length", 0))
     with requests.get(
         DOWNLOAD_URL + f"&version={version}&type={platform}", stream=True
     ) as r:
         r.raise_for_status()
         progress = Progress()
         with Progress() as progress:
-            file_size = int(r.headers["Content-Length"])
             task = progress.add_task(
                 f"[cyan]Downloading {filename}...", total=file_size, start=True
             )

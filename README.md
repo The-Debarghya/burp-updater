@@ -34,3 +34,4 @@ options:
   ```
 
 - Currently supports ONLY `Community Edition` of Burp in Linux and Mac only.
+- Another point to note, the intermediate steps takes some time to complete, don't be impatient and cancel the process!
