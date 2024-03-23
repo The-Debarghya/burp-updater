@@ -87,7 +87,10 @@ def check_for_updates(current_version: str) -> tuple:
                     comp = compare_versions(current_version, result["version"])
                     if comp == -1:
                         versions = (result["version"], result["releaseChannels"])
-                        break
+                    else:
+                        versions = ()
+                    break
+                        
             time.sleep(0.1)
             status.update()
             return versions
