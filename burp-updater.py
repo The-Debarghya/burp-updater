@@ -79,6 +79,7 @@ def check_for_updates(current_version: str) -> tuple:
             status.start()
             result_set = requests.get(API_URL + "?pageSize=2").json()["ResultSet"]
             results = result_set["Results"]
+            versions = ()
             for result in results:
                 if (
                     result["productType"] != "pro"
@@ -87,8 +88,6 @@ def check_for_updates(current_version: str) -> tuple:
                     comp = compare_versions(current_version, result["version"])
                     if comp == -1:
                         versions = (result["version"], result["releaseChannels"])
-                    else:
-                        versions = ()
                     break
                         
             time.sleep(0.1)
@@ -96,7 +95,8 @@ def check_for_updates(current_version: str) -> tuple:
             return versions
         except Exception as e:
             console.print(f"[red]Error: {e}[/red]")
-            return None
+            traceback.print_exc()
+            return ()
         finally:
             status.stop()
 
