@@ -16,6 +16,9 @@ DEFAULT_INSTALLATION_DIR = "/opt/BurpSuiteCommunity"
 
 
 def get_current_version() -> str:
+    """
+    Gets current local version installed in system
+    """
     try:
         version = (
             subprocess.run(["BurpSuiteCommunity", "--version"], capture_output=True)
@@ -28,6 +31,9 @@ def get_current_version() -> str:
 
 
 def verify_version(version: str, current_version: str) -> bool:
+    """
+    Verifies if the version to be updated to is different from the current version
+    """
     burp_exists = (
         subprocess.run(["which", "BurpSuiteCommunity"], capture_output=True).returncode
         == 0
@@ -38,6 +44,9 @@ def verify_version(version: str, current_version: str) -> bool:
 
 
 def compare_versions(version1: str, version2: str) -> int:
+    """
+    Compares version for validating if newer available
+    """
     version1 = version1.split(".")
     version2 = version2.split(".")
     for i in range(len(version1)):
@@ -48,7 +57,10 @@ def compare_versions(version1: str, version2: str) -> int:
     return 0
 
 
-def get_available_versions() -> list:
+def get_available_versions(platform: str) -> list:
+    """
+    Fetches available versions of Burp Suite
+    """
     console = Console()
     with console.status("[bold green]Fetching available versions...") as status:
         try:
@@ -57,11 +69,13 @@ def get_available_versions() -> list:
             results = result_set["Results"]
             versions = []
             for result in results:
-                if (
-                    result["productType"] != "pro"
-                    or result["productType"] != "enterprise"
-                ):
-                    versions.append((result["version"], result["releaseChannels"]))
+                if "Enterprise" in result["categories"] or "Stable" not in result["releaseChannels"]:
+                    continue
+                else:
+                    builds = result["builds"]
+                    for build in builds:
+                        if build["ProductPlatform"] == platform and build["ProductId"] == "community":
+                            versions.append((result["version"], result["releaseChannels"]))
             time.sleep(0.1)
             status.update()
             return versions
@@ -72,24 +86,28 @@ def get_available_versions() -> list:
             status.stop()
 
 
-def check_for_updates(current_version: str) -> tuple:
+def check_for_updates(current_version: str, platform: str) -> tuple:
+    """
+    Checks for stable updates available for Burp Suite
+    """
     console = Console()
     with console.status("[bold green]Fetching available versions...") as status:
         try:
             status.start()
-            result_set = requests.get(API_URL + "?pageSize=2").json()["ResultSet"]
+            result_set = requests.get(API_URL + "?pageSize=10").json()["ResultSet"]
             results = result_set["Results"]
             versions = ()
             for result in results:
-                if (
-                    result["productType"] != "pro"
-                    and result["productType"] != "enterprise"
-                ) and result["releaseChannels"][0] == "Stable":
-                    comp = compare_versions(current_version, result["version"])
-                    if comp == -1:
-                        versions = (result["version"], result["releaseChannels"])
-                    break
-                        
+                if "Enterprise" in result["categories"] or "Stable" not in result["releaseChannels"]:
+                    continue
+                else:
+                    builds = result["builds"]
+                    for build in builds:
+                        if build["ProductPlatform"] == platform and build["ProductId"] == "community":
+                            comp = compare_versions(current_version, build["Version"])
+                            if comp == -1:
+                                versions = (build["Version"], result["releaseChannels"])
+                                return versions                        
             time.sleep(0.1)
             status.update()
             return versions
@@ -102,6 +120,9 @@ def check_for_updates(current_version: str) -> tuple:
 
 
 def download_new_installer(version: str, platform: str) -> str:
+    """
+    Downloads the new installer for Burp Suite
+    """
     console = Console()
     with console.status("[bold green]Checking for specified version...") as status:
         status.start()
@@ -160,6 +181,9 @@ def download_new_installer(version: str, platform: str) -> str:
 
 
 def uninstall_old_version() -> str:
+    """
+    Uninstalls old version of Burp Suite
+    """
     dir_to_remove = DEFAULT_INSTALLATION_DIR
     prompt = input(f"Is your old installation at {DEFAULT_INSTALLATION_DIR}? [y/N]: ")
     if not prompt.lower() in ["y", "yes"]:
@@ -195,6 +219,9 @@ def uninstall_old_version() -> str:
 
 
 def install_from_installer(installer_path: str):
+    """
+    Installs Burp Suite from downloaded installer
+    """
     if os.geteuid() != 0:
         process = subprocess.run(
             ["bash", "-c", f"sudo bash {installer_path}"],
@@ -213,6 +240,9 @@ def install_from_installer(installer_path: str):
 
 
 def cleanup(downloaded_installer: str):
+    """
+    Cleans up the downloaded installer
+    """
     try:
         os.remove(downloaded_installer)
     except Exception as e:
@@ -261,7 +291,7 @@ if __name__ == "__main__":
         exit(0)
 
     if args.available_versions:
-        available_versions = get_available_versions()
+        available_versions = get_available_versions(args.platform)
         max_len = max([len(version) for version, _ in available_versions])
         print("VERSION\t\tRELEASE CHANNELS")
         for version, channels in available_versions:
@@ -278,7 +308,7 @@ if __name__ == "__main__":
             exit(1)
 
     if args.check:
-        versions = check_for_updates(version)
+        versions = check_for_updates(version, args.platform)
         if len(versions) == 0:
             print("No updates available!")
             exit(0)
