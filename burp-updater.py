@@ -132,6 +132,7 @@ def download_new_installer(version: str, platform: str) -> str:
             if result["version"] == version:
                 builds = result["builds"]
                 break
+
         for build in builds:
             if (
                 build["ProductId"] == "community"
@@ -275,6 +276,7 @@ if __name__ == "__main__":
         "--available-versions", help="Show available versions", action="store_true"
     )
     parser.add_argument("--check", help="Check for updates", action="store_true")
+    parser.add_argument("--fresh-install", help="Fresh installation of latest stable version", action="store_true")
     # parser.add_argument('-d', '--debug', help='Debug mode', action='store_true')
     version = get_current_version()
     parser.add_argument(
@@ -286,6 +288,24 @@ if __name__ == "__main__":
     )
 
     args = parser.parse_args()
+
+    if args.fresh_install:
+        version = check_for_updates("0.0.0", args.platform)
+        try:
+            downloaded_archive = download_new_installer(version[0], args.platform)
+            print(f'Installer downloaded to {os.getcwd() + "/" + downloaded_archive}')
+            install_from_installer(downloaded_archive)
+            proc = subprocess.run(["bash", "-c", "sudo -k"], check=True)
+            if proc.returncode != 0:
+                raise Exception("Error while dropping sudo privileges")
+            print("Cleaning up...")
+            cleanup(downloaded_archive)
+        except Exception as e:
+            # print(f'Error: {e.__str__()}')
+            traceback.print_exc()
+            exit(1)
+        exit(0)
+    
     if not verify_version(args.version, version):
         print(f"Already on version {args.version}")
         exit(0)
